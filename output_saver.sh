@@ -39,8 +39,9 @@ fi
     echo "==============="
     cat output.txt
     echo "*/"
+    echo "// ======================================================================================================================================================"
 
-} > "./outputs/${base_name}_result${date}.cpp"
+} >> "./outputs/${base_name}_result.cpp"
 
 # Clean up
 rm -f "$base_name" output.txt
