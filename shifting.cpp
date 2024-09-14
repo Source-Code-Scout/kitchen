@@ -1,14 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
-#include <algorithm>
 #include <random>
 
-// CODE FOR RANDOM ARRAY GENERATION
 std::vector<int> generateRandomArray(size_t length, int minValue, int maxValue) {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
-    
     std::uniform_int_distribution<int> distribution(minValue, maxValue);
 
     std::vector<int> randomArray(length);
@@ -19,26 +16,30 @@ std::vector<int> generateRandomArray(size_t length, int minValue, int maxValue) 
     return randomArray;
 }
 
-void useShift() {
-    std::vector<int> arr = generateRandomArray(10000, 0, 100);
+// Use volatile to prevent optimization
+volatile int dummy;
+
+void useShift(std::vector<int>& arr) {
     for(int i = 0; i < arr.size(); i++) {
-        arr[i] = arr[i] << 1;
+        dummy = arr[i] << 1;  // Use volatile to force the operation
     }
 }
 
-void useMult() {
-    std::vector<int> arr = generateRandomArray(10000, 0, 100);
+void useMult(std::vector<int>& arr) {
     for(int i = 0; i < arr.size(); i++) {
-        arr[i] *= 3;
+        dummy = arr[i] * 2;  // Use volatile to force the operation
     }
 }
+
+// Use function pointers to prevent inlining
+typedef void (*OperationFunc)(std::vector<int>&);
 
 // Benchmark function
-double benchmark(auto func, int iterations) {
+double benchmark(OperationFunc func, std::vector<int>& arr, int iterations) {
     auto start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < iterations; ++i) {
-        func();
+        func(arr);
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -47,19 +48,20 @@ double benchmark(auto func, int iterations) {
 }
 
 int main() {
-    int iterations = 100000;
+    int iterations = 10000;
+    std::vector<int> arr = generateRandomArray(10000, 0, 100);
 
-    // Run benchmarks
-    double shiftTime = benchmark(useShift, iterations);
-    double multTime = benchmark(useMult, iterations);
+    // Run benchmarks using function pointers
+    double shiftTime = benchmark(useShift, arr, iterations);
+    double multTime = benchmark(useMult, arr, iterations);
 
     // Print results
     std::cout << "Shifting time: " << shiftTime << " ms\n";
     std::cout << "Multiplication time: " << multTime << " ms\n";
 
     // Calculate and print speedup
-    double speedup = shiftTime / multTime;
-    std::cout << "Speedup: " << speedup << "x\n";
+    double speedup = multTime / shiftTime;
+    std::cout << "Speedup (Shift over Mult): " << speedup << "x\n";
 
     return 0;
 }

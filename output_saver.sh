@@ -20,7 +20,10 @@ fi
 base_name=$(basename "$cpp_file" .cpp)
 
 # Compile and run the C++ program, saving the output
-g++ -o "$base_name" "$cpp_file" -fconcepts && "./$base_name" > output.txt
+# g++ -o "$base_name" "$cpp_file" -fconcepts && "./$base_name" > output.txt
+# g++ -o "$base_name" "$cpp_file" -fconcepts && "./$base_name" > output.txt
+g++ -O0 -std=c++11 "$cpp_file" -o "$base_name" && "./$base_name" > output.txt
+
 
 # Check if compilation and execution were successful
 if [ $? -ne 0 ]; then
